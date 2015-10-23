@@ -9,7 +9,7 @@ class Order
 
     public function __construct($books)
     {
-        $this->books = $books;
+        $this->books = collect($books);
     }
 
     public function applyCoupon($coupon)
@@ -19,22 +19,19 @@ class Order
 
     public function total()
     {
-        $totalPrice = 0;
+        return $this->grossTotal() - $this->calculateDiscount();
+    }
 
-        foreach ($this->books as $book) {
-            $totalPrice += $book->price;
+    public function grossTotal()
+    {
+        return $this->books->sum('price');
+    }
+
+    public function calculateDiscount()
+    {
+        if (! isset($this->coupon)) {
+            return 0;
         }
-
-        if (isset($this->coupon)) {
-            if ($this->coupon->is_percent) {
-                $discount = $totalPrice * ($this->coupon->value / 100);
-            } else {
-                $discount = $this->coupon->value;
-            }
-        } else {
-            $discount = 0;
-        }
-
-        return $totalPrice - $discount;
+        return $this->coupon->discount($this->grossTotal());
     }
 }
